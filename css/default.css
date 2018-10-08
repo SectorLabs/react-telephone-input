@@ -2,6 +2,14 @@
   position: relative;
   width: 200px;
 }
+
+.country-dial-code {
+    cursor: pointer;
+    padding-left: 3rem /*rtl:ignore*/;
+    font-size: 1.2rem;
+    display: inline-block;
+}
+
 .react-tel-input .ad {
   background-position: -16px 0;
 }
