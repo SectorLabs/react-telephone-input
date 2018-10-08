@@ -6,7 +6,6 @@ npm-debug.log.*
 example/dist
 dist
 /es
-/lib
 /umd
 .DS_Store
 coverage
