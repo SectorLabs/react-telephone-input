@@ -5,6 +5,7 @@ import debounce from 'debounce'
 import memoize from 'lodash.memoize'
 
 import React, { Component } from 'react'
+import * as libPhoneNumber from 'google-libphonenumber';
 import PropTypes from 'prop-types'
 import classNames from 'classnames'
 import enhanceWithClickOutside from 'react-click-outside'
@@ -12,6 +13,12 @@ import countryData from 'country-telephone-data'
 import formatNumber from './format_number'
 import replaceCountryCode from './replace_country_code'
 import isNumberValid from './number_validator'
+
+// Require `PhoneNumberFormat`.
+const PNF = libPhoneNumber.PhoneNumberFormat;
+
+// Get an instance of `PhoneNumberUtil`.
+const phoneUtil = libPhoneNumber.PhoneNumberUtil.getInstance();
 
 const { find, propEq, equals, findIndex, startsWith } = R
 
@@ -58,7 +65,6 @@ export class ReactTelephoneInput extends Component {
     onEnterKeyPress() {},
     preferredCountries: [],
     disabled: false,
-    placeholder: '+1 (702) 123-4567',
     autoComplete: 'tel',
     required: false,
     inputProps: {},
@@ -85,6 +91,7 @@ export class ReactTelephoneInput extends Component {
 
     this.state = {
       preferredCountries,
+      placeholder: '',
       showDropDown: false,
       queryString: '',
       freezeSelection: false,
@@ -233,6 +240,8 @@ export class ReactTelephoneInput extends Component {
         freezeSelection = false
       }
       formattedNumber = formatNumber(inputNumber, newSelectedCountry.format, this.props.autoFormat)
+      const numberObj = phoneUtil.getExampleNumberForType(newSelectedCountry.dialCode, PNF.INTERNATIONAL);
+      console.log("Number=>", numberObj);
     }
 
     let caretPosition = event.target.selectionStart
@@ -243,6 +252,7 @@ export class ReactTelephoneInput extends Component {
 
     this.setState(
       {
+        placeholder: 1,
         formattedNumber,
         freezeSelection,
         selectedCountry
@@ -609,7 +619,7 @@ export class ReactTelephoneInput extends Component {
           autoComplete={this.props.autoComplete}
           pattern={this.props.pattern}
           required={this.props.required}
-          placeholder={this.props.placeholder}
+          placeholder={this.state.placeholder}
           disabled={this.props.disabled}
           {...otherProps}
           data-test-id="src_reacttelephoneinput_test_id_5"
@@ -628,7 +638,6 @@ ReactTelephoneInput.propTypes = {
   onlyCountries: PropTypes.arrayOf(PropTypes.object),
   preferredCountries: PropTypes.arrayOf(PropTypes.string),
   flagsImagePath: PropTypes.string,
-  placeholder: PropTypes.string,
   autoComplete: PropTypes.string,
   classNames: PropTypes.string,
   className: PropTypes.string,
