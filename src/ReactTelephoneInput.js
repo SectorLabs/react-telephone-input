@@ -5,6 +5,7 @@ import debounce from 'debounce'
 import memoize from 'lodash.memoize'
 
 import React, { Component } from 'react'
+import * as libPhoneNumber from 'google-libphonenumber';
 import PropTypes from 'prop-types'
 import classNames from 'classnames'
 import enhanceWithClickOutside from 'react-click-outside'
@@ -12,6 +13,12 @@ import countryData from 'country-telephone-data'
 import formatNumber from './format_number'
 import replaceCountryCode from './replace_country_code'
 import isNumberValid from './number_validator'
+
+// Require `PhoneNumberFormat`.
+const PNF = libPhoneNumber.PhoneNumberFormat;
+
+// Get an instance of `PhoneNumberUtil`.
+const phoneUtil = libPhoneNumber.PhoneNumberUtil.getInstance();
 
 const { find, propEq, equals, findIndex, startsWith } = R
 
@@ -58,7 +65,6 @@ export class ReactTelephoneInput extends Component {
     onEnterKeyPress() {},
     preferredCountries: [],
     disabled: false,
-    placeholder: '+1 (702) 123-4567',
     autoComplete: 'tel',
     required: false,
     inputProps: {},
@@ -85,6 +91,7 @@ export class ReactTelephoneInput extends Component {
 
     this.state = {
       preferredCountries,
+      placeholder: '',
       showDropDown: false,
       queryString: '',
       freezeSelection: false,
@@ -187,6 +194,7 @@ export class ReactTelephoneInput extends Component {
     const { preferredCountries, selectedCountry } = this.state
     const { onlyCountries } = this.props
 
+
     // need to put the highlight on the current selected country if the dropdown is going to open up
     this.setState({
       showDropDown: !this.state.showDropDown,
@@ -199,7 +207,7 @@ export class ReactTelephoneInput extends Component {
   }
 
   handleInput = event => {
-    let formattedNumber = '+'
+    let formattedNumber = ''
     let newSelectedCountry = this.state.selectedCountry
     let { freezeSelection } = this.state
 
@@ -215,7 +223,7 @@ export class ReactTelephoneInput extends Component {
       event.returnValue = false // eslint-disable-line no-param-reassign
     }
 
-    if (event.target.value && event.target.value.length > 0) {
+    /*if (event.target.value && event.target.value.length > 0) {
       // before entering the number in new format,
       // lets check if the dial code now matches some other country
       // replace all non-numeric characters from the input string
@@ -233,7 +241,7 @@ export class ReactTelephoneInput extends Component {
         freezeSelection = false
       }
       formattedNumber = formatNumber(inputNumber, newSelectedCountry.format, this.props.autoFormat)
-    }
+    }*/
 
     let caretPosition = event.target.selectionStart
     const oldFormattedText = this.state.formattedNumber
@@ -243,6 +251,7 @@ export class ReactTelephoneInput extends Component {
 
     this.setState(
       {
+        placeholder: 1,
         formattedNumber,
         freezeSelection,
         selectedCountry
@@ -281,11 +290,21 @@ export class ReactTelephoneInput extends Component {
 
     // tiny optimization
     if (currentSelectedCountry.iso2 !== nextSelectedCountry.iso2) {
-      const newNumber = replaceCountryCode(
+        const newNumber = replaceCountryCode(
         currentSelectedCountry,
         nextSelectedCountry,
         this.state.formattedNumber.replace(/\D/g, '') // let's convert formatted number to just numbers for easy find/replace
       )
+      const exampleNumber = phoneUtil.getExampleNumberForType(nextSelectedCountry.iso2, 1);
+      let exampleNumberValue = '';
+      if (exampleNumber) {
+        exampleNumberValue = exampleNumber.getNationalNumber();
+        exampleNumberValue = exampleNumberValue.toString();
+        // Get country based example number.
+        // Only display first mobile digit and
+        // ecnode the other digits with 'x'
+        exampleNumberValue = exampleNumberValue[0] + exampleNumberValue.slice(1).replace(/\d/g, 'x');
+      }
 
       const formattedNumber = formatNumber(
         newNumber,
@@ -298,13 +317,10 @@ export class ReactTelephoneInput extends Component {
           showDropDown: false,
           selectedCountry: nextSelectedCountry,
           freezeSelection: true,
-          formattedNumber
+          placeholder: exampleNumberValue,
         },
         () => {
           this._cursorToEnd()
-          if (this.props.onChange) {
-            this.props.onChange(formattedNumber, nextSelectedCountry)
-          }
         }
       )
     } else {
@@ -359,7 +375,7 @@ export class ReactTelephoneInput extends Component {
     // if the input is blank, insert dial code of the selected country
     if (this.numberInputRef && this.numberInputRef.value === '+') {
       this.setState({
-        formattedNumber: `+${this.state.selectedCountry.dialCode}`
+        formattedNumber: `${this.state.selectedCountry.dialCode}`
       })
     }
   }
@@ -550,7 +566,7 @@ export class ReactTelephoneInput extends Component {
     })
     const inputClasses = classNames({
       'form-control': true,
-      'invalid-number': !this.props.isValid(this.state.formattedNumber.replace(/\D/g, ''))
+       'invalid-number': !this.props.isValid(this.state.formattedNumber.replace(/\D/g, ''))
     })
 
     const flagViewClasses = classNames({
@@ -594,6 +610,7 @@ export class ReactTelephoneInput extends Component {
           </button>
           {this.state.showDropDown ? this.getCountryDropDownList() : ''}
         </div>
+        <div className="country-dial-code">{`+${this.state.selectedCountry.dialCode}`}</div>
         <input
           onChange={this.handleInput}
           onClick={this.handleInputClick}
@@ -609,7 +626,7 @@ export class ReactTelephoneInput extends Component {
           autoComplete={this.props.autoComplete}
           pattern={this.props.pattern}
           required={this.props.required}
-          placeholder={this.props.placeholder}
+          placeholder={this.state.placeholder}
           disabled={this.props.disabled}
           {...otherProps}
           data-test-id="src_reacttelephoneinput_test_id_5"
@@ -628,7 +645,6 @@ ReactTelephoneInput.propTypes = {
   onlyCountries: PropTypes.arrayOf(PropTypes.object),
   preferredCountries: PropTypes.arrayOf(PropTypes.string),
   flagsImagePath: PropTypes.string,
-  placeholder: PropTypes.string,
   autoComplete: PropTypes.string,
   classNames: PropTypes.string,
   className: PropTypes.string,
