@@ -58,7 +58,6 @@ export class ReactTelephoneInput extends Component {
     onEnterKeyPress() {},
     preferredCountries: [],
     disabled: false,
-    placeholder: '+1 (702) 123-4567',
     autoComplete: 'tel',
     required: false,
     inputProps: {},
@@ -85,6 +84,7 @@ export class ReactTelephoneInput extends Component {
 
     this.state = {
       preferredCountries,
+      placeholder: '',
       showDropDown: false,
       queryString: '',
       freezeSelection: false,
@@ -243,6 +243,7 @@ export class ReactTelephoneInput extends Component {
 
     this.setState(
       {
+        placeholder: 1,
         formattedNumber,
         freezeSelection,
         selectedCountry
@@ -609,7 +610,7 @@ export class ReactTelephoneInput extends Component {
           autoComplete={this.props.autoComplete}
           pattern={this.props.pattern}
           required={this.props.required}
-          placeholder={this.props.placeholder}
+          placeholder={this.state.placeholder}
           disabled={this.props.disabled}
           {...otherProps}
           data-test-id="src_reacttelephoneinput_test_id_5"
@@ -628,7 +629,6 @@ ReactTelephoneInput.propTypes = {
   onlyCountries: PropTypes.arrayOf(PropTypes.object),
   preferredCountries: PropTypes.arrayOf(PropTypes.string),
   flagsImagePath: PropTypes.string,
-  placeholder: PropTypes.string,
   autoComplete: PropTypes.string,
   classNames: PropTypes.string,
   className: PropTypes.string,
